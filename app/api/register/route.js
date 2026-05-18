@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { connectDb } from "@/lib/mongodb";
 import { jsonError, jsonSuccess } from "@/lib/api-response";
 
+
 export async function POST(req) {
   try {
     const formData = await req.formData();
@@ -11,12 +12,7 @@ export async function POST(req) {
     const file = formData.get("photo");
 
     if (!name || !rollNo || !email || !file) {
-      return NextResponse.json(
-        {
-          error: "Name, rollNo, email, and photo are required",
-        },
-        { status: 400 },
-      );
+return jsonError("Name, rollNo, email, and photo are required", 400);
     }
 
     // Get DB
@@ -26,10 +22,7 @@ export async function POST(req) {
     // Check if user already registered
     const existingUser = await users.findOne({ rollNo });
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User already registered with a photo" },
-        { status: 409 }, // conflict
-      );
+return jsonError("User already registered with a photo", 409);
     }
 
     // Convert file to buffer
@@ -55,23 +48,15 @@ export async function POST(req) {
     };
     await users.insertOne(user);
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          message: "User registered successfully",
-          user,
-        },
-      },
-      { status: 201 },
-    );
+return jsonSuccess(
+  {
+    message: "User registered successfully",
+    user,
+  },
+  201,
+);
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      {
-        error: error.message || "Internal server error",
-      },
-      { status: 500 },
-    );
+return jsonError(error.message || "Internal server error", 500);
   }
 }
