@@ -31,6 +31,12 @@ export function Navbar() {
   const { user, userProfile, signOut, isAuthenticated } = useAuthContext();
   const dropdownRef = useRef(null);
   const pathname = usePathname();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+const [notifications, setNotifications] = useState([
+  { id: 1, message: "Welcome to Learnova! 🎉", time: "Just now", read: false },
+  { id: 2, message: "Complete your profile to get started.", time: "2 min ago", read: false },
+]);
+const [unreadCount, setUnreadCount] = useState(2);
 
   // Handle scroll effect for transparency
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -81,6 +87,17 @@ export function Navbar() {
     await signOut();
     setIsDropdownOpen(false);
     setIsMenuOpen(false);
+  };
+  const markAsRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
   };
 
   // Get user initials for avatar fallback
@@ -254,8 +271,57 @@ export function Navbar() {
                       </span>
                     </Button>
                   </Link>
+                  {/* Notification Bell */}
+<div className="relative">
+  <button
+    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+    className="relative p-2 rounded-xl text-white hover:text-accent transition-all duration-300 hover:bg-white/5"
+    aria-label="Notifications"
+  >
+    <Bell className="h-5 w-5" />
+    {unreadCount > 0 && (
+      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+        {unreadCount > 9 ? "9+" : unreadCount}
+      </span>
+    )}
+  </button>
 
+  {isNotificationOpen && (
+    <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+      <div className="p-4 border-b border-white/10 flex items-center justify-between">
+        <h3 className="text-white font-semibold">Notifications</h3>
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllAsRead}
+            className="text-xs text-accent hover:underline"
+          >
+            Mark all as read
+          </button>
+        )}
+      </div>
+      <div className="max-h-72 overflow-y-auto">
+        {notifications.length === 0 ? (
+          <div className="p-6 text-center text-white/50 text-sm">
+            No notifications yet
+          </div>
+        ) : (
+          notifications.map((n) => (
+            <div
+              key={n.id}
+              onClick={() => markAsRead(n.id)}
+              className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${!n.read ? "bg-accent/5" : ""}`}
+            >
+              <p className={`text-sm ${!n.read ? "text-white font-medium" : "text-white/70"}`}>{n.message}</p>
+              <p className="text-xs text-white/40 mt-1">{n.time}</p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )}
+</div>
                   {/* Enhanced User Dropdown */}
+                  
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
