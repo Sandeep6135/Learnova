@@ -5,7 +5,6 @@ import React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
-import { MessageCircle } from "lucide-react";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LearnovaChatbot from "@/components/ChatBot";
@@ -242,20 +241,7 @@ export default function RootLayout({ children }) {
             <ScrollToTop />
             {/* Chatbot injected globally with Error Boundary */}
             <div className="z-50">
-              <ErrorBoundary
-                errorMessage="There was an error loading the chatbot. Please refresh the page to try again."
-                fallback={
-                  <div className="fixed bottom-6 right-6 z-50">
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300"
-                      title="Chatbot unavailable - Click to refresh"
-                    >
-                      <MessageCircle size={24} />
-                    </button>
-                  </div>
-                }
-              >
+              <ErrorBoundary errorMessage="There was an error loading the chatbot. Please refresh the page to try again.">
                 <LearnovaChatbot />
               </ErrorBoundary>
             </div>
