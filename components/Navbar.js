@@ -338,7 +338,19 @@ useEffect(() => {
                   </Link>
                 );
               })}
-
+              {/* Theme Toggle - visible to all users */}
+              {mounted && (
+                <button
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="p-2 rounded-xl text-foreground hover:bg-accent/10 transition-all duration-300"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )}
+                </button>
+              )}
               { isAuthenticated ? (
                 <div className="flex items-center space-x-2 md:space-x-4 ml-2 md:ml-6">
                  <button
@@ -439,21 +451,6 @@ useEffect(() => {
                       </div>
                     )}
                   </div>
-                 {/* Theme Toggle */}
-                  {mounted && (
-                 <button
-                 onClick={() =>
-                 setTheme(theme === "dark" ? "light" : "dark")
-                 }
-                 className="p-2 rounded-xl text-foreground hover:bg-accent/10 transition-all duration-300"
-                  >
-                  {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-                  ) : (
-                  <Moon className="h-5 w-5" />
-                 )}
-                 </button>
-                 )}
 
                   {/* User Dropdown */}
                   <div
