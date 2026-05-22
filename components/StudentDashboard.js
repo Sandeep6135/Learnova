@@ -41,8 +41,6 @@ const AttendanceHeatmap = dynamic(
     loading: () => <ChartSkeleton variant="heatmap" />,
   }
 );
-
-import { useAuth } from "@/hooks/useAuth";
 import { weeklySchedule, mockRecentActivity } from "@/constants/mockData";
 import AttendanceAnalytics from "./dashboard/AttendanceAnalytics";
 import StreakCounter from "./gamification/StreakCounter";
@@ -60,8 +58,6 @@ const StudentDashboard = () => {
   const [upcomingClass, setUpcomingClass] = useState(null);
   const [isAttendanceWindow, setIsAttendanceWindow] = useState(false);
   const [gamificationData, setGamificationData] = useState(null);
-
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchGamification = async () => {
