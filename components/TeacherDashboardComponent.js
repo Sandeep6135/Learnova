@@ -1,5 +1,10 @@
 import { toast } from "react-hot-toast";
-import React, { useState, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { Navbar } from "./Navbar";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,6 +59,8 @@ import {
   Loader2,
   XCircle,
 } from "lucide-react";
+import ExportDropdown from "@/components/ui/ExportDropdown";
+import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 import dynamic from "next/dynamic";
 import ChartSkeleton from "@/components/ui/ChartSkeleton";
 import DashboardSkeleton from "@/components/ui/DashboardSkeleton";
@@ -63,6 +70,7 @@ import { AttendancePasscodeModal } from "./dashboard/AttendancePasscodeModal";
 import { ExceptionRequestsList } from "./dashboard/ExceptionRequestsList";
 import { db } from "@/lib/firebaseConfig";
 import { collection, getDocs, query, where, onSnapshot, doc, getDoc } from "firebase/firestore";
+import { getTodayKeyLocal } from "@/lib/dateUtils";
 
 const AttendanceTrendsChart = dynamic(
   () => import("@/components/charts/AttendanceTrendsChart"),
@@ -92,7 +100,7 @@ const TeacherDashboard = () => {
 
   const fetchTodayAttendanceStats = useCallback(async () => {
     try {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = getTodayKeyLocal();
 
       const attendanceQuery = query(
         collection(db, "attendance_records"),
@@ -115,11 +123,16 @@ const TeacherDashboard = () => {
         (r) => r.status === "late",
       ).length;
 
-      const absentToday = records.filter(
-        (r) => r.status === "absent",
-      ).length;
+      // Query the users collection to get total enrolled students with role === "student"
+      const studentsQuery = query(
+        collection(db, "users"),
+        where("role", "==", "student"),
+      );
+      const studentsSnapshot = await getDocs(studentsQuery);
+      const totalStudents = studentsSnapshot.size;
 
-      const totalStudents = records.length;
+      // Calculate absent students dynamically as the remainder of enrolled students
+      const absentToday = Math.max(0, totalStudents - (presentToday + lateToday));
 
       const averageAttendance =
         totalStudents > 0
@@ -162,6 +175,11 @@ const TeacherDashboard = () => {
   const [allRequests, setAllRequests] = useState([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const [requestsError, setRequestsError] = useState(null);
+  const pendingRequests = useMemo(() => {
+  return attendanceRequests.filter(
+    (req) => req.status === "pending"
+  );
+}, [attendanceRequests]);
 
   // Dynamic teacher data
   const [teacher, setTeacher] = useState({
@@ -176,6 +194,41 @@ const TeacherDashboard = () => {
 
   const [weeklySchedule, setWeeklySchedule] = useState({});
   const [studentAttendanceData, setStudentAttendanceData] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = (format) => {
+    setIsExporting(true);
+    setTimeout(() => {
+      try {
+        const exportData = studentAttendanceData.map(s => ({
+          Date: new Date().toLocaleDateString(),
+          'Student Name': s.name,
+          'Roll No': s.rollNo,
+          Status: s.status,
+        }));
+        
+        const filename = `attendance_report_${selectedClass || 'all'}_${new Date().toISOString().split('T')[0]}`;
+        
+        if (format === 'csv') {
+          exportToCSV(exportData, filename);
+        } else {
+          const columns = [
+            { header: 'Date', dataKey: 'Date' },
+            { header: 'Student Name', dataKey: 'Student Name' },
+            { header: 'Roll No', dataKey: 'Roll No' },
+            { header: 'Status', dataKey: 'Status' }
+          ];
+          exportToPDF(exportData, columns, `Attendance Report - ${selectedClass || 'All'}`, filename);
+        }
+        toast.success(`Successfully exported as ${format.toUpperCase()}`);
+      } catch (error) {
+        console.error("Export failed:", error);
+        toast.error("Failed to export report");
+      } finally {
+        setIsExporting(false);
+      }
+    }, 500);
+  };
 
   // Fetch Teacher Profile & Schedule
   useEffect(() => {
@@ -255,7 +308,7 @@ const TeacherDashboard = () => {
           email: doc.data().email,
         }));
 
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTodayKeyLocal();
         const attendanceQuery = query(
           collection(db, "attendance_records"),
           where("date", "==", today)
@@ -452,31 +505,7 @@ const TeacherDashboard = () => {
     }, 1500);
 
     const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now);
-
-      // Check if it's attendance window (9:00-9:10 AM on weekdays)
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      const day = now.getDay();
-
-      const isWeekday = day >= 1 && day <= 5;
-      const isAttendanceTime = hour === 9 && minute <= 10;
-
-      setAttendanceWindow(isWeekday && isAttendanceTime);
-
-      // Get today's classes
-      const dayNames = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-      const today = dayNames[day];
-      setTodayClasses(weeklySchedule[today] || []);
+      setCurrentTime(new Date());
     }, 1000);
 
     return () => {
@@ -484,6 +513,38 @@ const TeacherDashboard = () => {
       clearTimeout(loadingTimer);
     };
   }, []);
+
+  useEffect(() => {
+    const now = new Date();
+
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const day = now.getDay();
+
+    const isWeekday = day >= 1 && day <= 5;
+    const isAttendanceTime =
+      hour === 9 && minute <= 10;
+
+    setAttendanceWindow(
+      isWeekday && isAttendanceTime
+    );
+
+    const dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+
+    const today = dayNames[day];
+
+    setTodayClasses(
+      weeklySchedule[today] || []
+    );
+  }, [weeklySchedule]);
 
   const generatePasscode = async () => {
     setPasscodeLoading(true);
@@ -556,6 +617,44 @@ const TeacherDashboard = () => {
     toast.success("Passcode copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   };
+  const handleExportCSV = () => {
+    if (!studentAttendanceData || studentAttendanceData.length === 0) {
+      toast.error("No attendance records found to export.");
+      return;
+    }
+
+  const headers = ["Student ID", "Student Name", "Date", "Attendance Status"];
+  const todayDate = new Date().toISOString().slice(0, 10);
+
+  const csvRows = studentAttendanceData.map((student) => {
+    const studentId = student.rollNo || student.id || "N/A";
+    const studentName = student.name || "Unknown";
+    const status = student.status || "absent";
+    
+    return [
+      `"${studentId}"`,
+      `"${studentName.replace(/"/g, '""')}"`, 
+      `"${todayDate}"`,
+      `"${status.toUpperCase()}"`
+    ].join(",");
+  });
+
+  const csvContent = [headers.join(","), ...csvRows].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const fileName = `attendance_report_${todayDate}.csv`;
+
+  const link = document.createElement("a");
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exported data successfully to ${fileName}`);
+  }
+};
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -838,15 +937,19 @@ const TeacherDashboard = () => {
             <h2 className="text-xl font-bold text-white mb-6">Quick Actions</h2>
 
             <div className="space-y-3">
-              <button className="w-full bg-gradient-to-r from-purple-600/20 to-blue-600/20 hover:from-purple-600/30 hover:to-blue-600/30 border border-purple-500/30 text-white p-3 rounded-xl transition-colors text-left">
-                <div className="flex items-center space-x-3">
+              <ExportDropdown
+                onExport={handleExport}
+                isExporting={isExporting}
+                className="w-full bg-gradient-to-r from-purple-600/20 to-blue-600/20 hover:from-purple-600/30 hover:to-blue-600/30 border border-purple-500/30 text-white p-3 rounded-xl transition-colors text-left flex justify-start items-center"
+              >
+                <div className="flex items-center space-x-3 text-left">
                   <Download className="w-5 h-5 text-purple-400" />
                   <div>
-                    <div className="font-medium">Export Reports</div>
+                    <div className="font-medium text-white">Export Reports</div>
                     <div className="text-sm text-gray-400">CSV/PDF formats</div>
                   </div>
                 </div>
-              </button>
+              </ExportDropdown>
 
               <button className="w-full bg-gradient-to-r from-green-600/20 to-emerald-600/20 hover:from-green-600/30 hover:to-emerald-600/30 border border-green-500/30 text-white p-3 rounded-xl transition-colors text-left">
                 <div className="flex items-center space-x-3">
@@ -872,16 +975,17 @@ const TeacherDashboard = () => {
                 </div>
               </button>
 
-              <button className="w-full bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/30 text-white p-3 rounded-xl transition-colors text-left">
+              <button 
+                onClick={handleExportCSV}
+                className="w-full bg-gradient-to-r from-purple-600/20 to-blue-600/20 hover:from-purple-600/30 hover:to-blue-600/30 border border-purple-500/30 text-white p-3 rounded-xl transition-colors text-left"
+              >
                 <div className="flex items-center space-x-3">
-                  <BarChart3 className="w-5 h-5 text-blue-400" />
+                  <Download className="w-5 h-5 text-purple-400" />
                   <div>
-                    <div className="font-medium">View Analytics</div>
-                    <div className="text-sm text-gray-400">
-                      Detailed insights
-                    </div>
-                  </div>
-                </div>
+                    <div className="font-medium">Export Reports</div>
+                    <div className="text-sm text-gray-400">CSV format (Instant Download)</div>
+                 </div>
+               </div>
               </button>
             </div>
           </div>
@@ -1121,7 +1225,10 @@ const TeacherDashboard = () => {
                     Generate Passcode
                   </button>
                 )}
-                <button className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-2">
+                <button 
+                  onClick={handleExportCSV}
+                  className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-2"
+                >
                   <Download className="w-3 h-3" />
                   Export Data
                 </button>
@@ -1187,4 +1294,4 @@ const TeacherDashboard = () => {
     </div>
   );
 };
-export default TeacherDashboard;
+export default React.memo(TeacherDashboard);

@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { jwtVerify, createRemoteJWKSet } from "jose";
-
-// Firebase publishes RS256 public keys here; rotate every ~6 hours
-const JWKS_URL = new URL(
-  "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
-);
-const JWKS = createRemoteJWKSet(JWKS_URL);
-
 const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const FIREBASE_AUTH_DOMAIN = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
+const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
 function buildPageCsp() {
   const frameSrc = [
@@ -41,8 +34,7 @@ function buildPageCsp() {
 }
 
 /**
- * Verifies a Firebase ID token's RS256 signature and all standard claims.
- * Runs entirely in the Edge Runtime using the jose library.
+ * Verifies a Firebase ID token by delegating validation to Firebase Auth REST API.
  * Fails closed: any error returns null (deny access).
  *
  * @param {string} token - The Firebase ID token from the authToken cookie
@@ -50,24 +42,50 @@ function buildPageCsp() {
  */
 async function verifyIdToken(token) {
   try {
-    if (!FIREBASE_PROJECT_ID) return null;
+    if (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY) return null;
 
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
-      audience: FIREBASE_PROJECT_ID,
-      algorithms: ["RS256"],
-      clockTolerance: 300,
-    });
-    
-    // Validate standard JWT claims as required by the Firebase ID token spec
-    const now = Math.floor(Date.now() / 1000);
-    if (!payload.sub || payload.iat > now) {
+    const response = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: token }),
+      }
+    );
+
+    if (!response.ok) {
       return null;
     }
 
+    const data = await response.json().catch(() => null);
+    const user = data?.users?.[0];
+    if (!user?.localId) return null;
+
+    let parsedCustomClaims = {};
+    if (user.customAttributes) {
+      try {
+        parsedCustomClaims = JSON.parse(user.customAttributes);
+      } catch {
+        parsedCustomClaims = {};
+      }
+    }
+
+    const authTimeSeconds = user.lastLoginAt
+      ? Math.floor(Number(user.lastLoginAt) / 1000)
+      : undefined;
+
+    const payload = {
+      sub: user.localId,
+      uid: user.localId,
+      email: user.email,
+      email_verified: user.emailVerified === true,
+      role: parsedCustomClaims?.role,
+      iat: authTimeSeconds,
+    };
+
     return payload;
   } catch {
-    // Network errors, malformed JSON, or crypto failures all result in denial
+    // Network errors, malformed JSON, or upstream failures all result in denial
     return null;
   }
 }
@@ -128,16 +146,29 @@ export async function middleware(request) {
 
   // Define role-protected dashboard routes
   const protectedDashboards = [
-    { prefix: "/student", role: "student", defaultPath: "/student/dashboard" },
-    { prefix: "/teacher", role: "teacher", defaultPath: "/teacher/dashboard" },
-    { prefix: "/admin", role: "admin", defaultPath: "/admin/dashboard" },
-    { prefix: "/institute", role: "institute", defaultPath: "/institute/dashboard" },
+    { prefix: "/student", apiPrefix: "/api/student", role: "student", defaultPath: "/student/dashboard" },
+    { prefix: "/teacher", apiPrefix: "/api/teacher", role: "teacher", defaultPath: "/teacher/dashboard" },
+    { prefix: "/admin", apiPrefix: "/api/admin", role: "admin", defaultPath: "/admin/dashboard" },
+    { prefix: "/institute", apiPrefix: "/api/institute", role: "institute", defaultPath: "/institute/dashboard" },
   ];
 
   // 1. If path is a protected dashboard route
   const matchedDashboard = protectedDashboards.find((dashboard) =>
-    pathname.startsWith(dashboard.prefix)
+    pathname.startsWith(dashboard.prefix) ||
+    (dashboard.apiPrefix && pathname.startsWith(dashboard.apiPrefix))
   );
+
+  // General API route protection (non-dashboard routes under /api/)
+  if (pathname.startsWith("/api/") && pathname !== "/api/check-groq-config") {
+    if (!matchedDashboard) {
+      if (!isTokenValid) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      if (!isEmailVerified) {
+        return NextResponse.json({ error: "Forbidden: Email not verified" }, { status: 403 });
+      }
+    }
+  }
 
   if (matchedDashboard) {
     // Not logged in or invalid token -> redirect to /auth
@@ -150,6 +181,9 @@ export async function middleware(request) {
 
     // Email not verified -> redirect to /verify
     if (!isEmailVerified) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden: Email not verified" }, { status: 403 });
+      }
       return NextResponse.redirect(new URL("/verify", request.url));
     }
 
@@ -216,7 +250,7 @@ export async function middleware(request) {
 // Next.js Middleware matcher configuration
 export const config = {
   matcher: [
-    // Match all HTML page routes. Exclude APIs, static assets, favicon, manifest, and service worker.
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*).*)",
+    // Match all HTML pages and API routes. Exclude static assets, favicon, manifest, and service worker.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*).*)",
   ],
 };

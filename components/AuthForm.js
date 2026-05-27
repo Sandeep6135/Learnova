@@ -21,6 +21,8 @@ export default function AuthForm({
   setFullName,
   instituteName,
   setInstituteName,
+  inviteCode,
+  setInviteCode,
   errors,
   setErrors,
   isLoading,
@@ -48,6 +50,8 @@ export default function AuthForm({
       result = validateName(value, "Full Name");
     } else if (field === "instituteName") {
       result = validateRequired(value, "Institute Name");
+    } else if (field === "inviteCode") {
+      result = validateRequired(value, "Invite Code");
     } else if (field === "email") {
       result = validateEmail(value);
     } else if (field === "password") {
