@@ -25,18 +25,13 @@ jobs:
           cache: 'npm'
 
       - name: 📚 Install dependencies
+        run: npm install --legacy-peer-deps
         run: |
           rm -rf node_modules package-lock.json
           npm install
 
-      - name: ♻️ Restore Next.js build cache
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-next-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-next-${{ matrix.node-version }}-
-            ${{ runner.os }}-next-
+      - name: 🧪 Run unit tests
+        run: npm test
 
       - name: 🔧 Fix Tailwind CSS native binding
         run: |

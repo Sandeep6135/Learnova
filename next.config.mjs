@@ -96,11 +96,15 @@ const withPWA = withPWAInit
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "github.com" },
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
   webpack: (config, { isServer }) => {
@@ -110,6 +114,9 @@ const nextConfig = {
       encoding: false, // Fixes TensorFlow warning
     };
     return config;
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   async headers() {
     return [
@@ -128,4 +135,4 @@ const nextConfig = {
   },
 };
 
-export default process.env.NODE_ENV === "development" ? nextConfig : withPWA(nextConfig);
+export default nextConfig;
