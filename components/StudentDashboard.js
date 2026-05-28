@@ -288,7 +288,7 @@ setRecentActivity(mapped);
         return "text-yellow-400 bg-yellow-500/10 border-yellow-500/30";
 
       default:
-        return "text-gray-400 bg-gray-500/10 border-gray-500/30";
+        return "text-muted-foreground dark:text-gray-400 bg-gray-500/10 border-gray-500/30";
     }
   };
 
@@ -314,8 +314,8 @@ setRecentActivity(mapped);
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden flex items-center justify-center">
-        <div className="relative z-10 text-center text-white px-4">
+      <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center">
+        <div className="relative z-10 text-center text-foreground dark:text-white px-4">
           <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-10 h-10 text-red-400" />
           </div>
@@ -324,7 +324,7 @@ setRecentActivity(mapped);
             Error Loading Dashboard
           </h2>
 
-          <p className="text-gray-400 mb-6">
+          <p className="text-muted-foreground dark:text-gray-400 mb-6">
             {error}
           </p>
 
@@ -332,7 +332,7 @@ setRecentActivity(mapped);
             onClick={() =>
               window.location.reload()
             }
-            className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
+            className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-foreground dark:text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
           >
             <RefreshCw className="w-5 h-5 mr-2 inline" />
             Retry
@@ -343,13 +343,13 @@ setRecentActivity(mapped);
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       <Navbar />
 
       <div className="relative z-10 max-w-7xl mx-auto pt-20 pb-12 px-6 space-y-6">
 
         {/* ── Header: profile + live clock ── */}
-        <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl">
+        <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-6 shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -363,7 +363,7 @@ setRecentActivity(mapped);
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-blue-500 flex items-center justify-center border border-accent/30">
-                    <span className="text-sm font-bold text-white">
+                    <span className="text-sm font-bold text-foreground dark:text-white">
                       {getUserInitials()}
                     </span>
                   </div>
@@ -378,17 +378,17 @@ setRecentActivity(mapped);
                   </h1>
                   <StreakTracker />
                 </div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-muted-foreground dark:text-gray-400">
                   {user?.email || "No email"}
                 </div>
               </div>
             </div>
 
             <div className="text-right">
-              <div className="text-xl font-mono text-white">
+              <div className="text-xl font-mono text-foreground dark:text-white">
                 {currentTime?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-muted-foreground dark:text-gray-400">
                 {currentTime?.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
               </div>
             </div>
@@ -397,16 +397,16 @@ setRecentActivity(mapped);
 
         {/* ── Gamification row: Streak · XP · Badges ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
+          <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-4 shadow-xl">
             <StreakCounter streak={gamificationData?.currentStreak ?? 0} />
           </div>
-          <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
+          <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-4 shadow-xl">
             <XpProgressBar
               xp={gamificationData?.xp ?? 0}
               level={gamificationData?.level ?? 1}
             />
           </div>
-          <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
+          <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-4 shadow-xl">
             <BadgeGallery badges={gamificationData?.badges ?? []} />
           </div>
         </div>
@@ -426,14 +426,14 @@ setRecentActivity(mapped);
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Today's Schedule */}
-          <div className="lg:col-span-1 bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl">
+          <div className="lg:col-span-1 bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-6 shadow-xl">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-bold text-white">Today&apos;s Schedule</h2>
+              <h2 className="text-lg font-bold text-foreground dark:text-white">Today&apos;s Schedule</h2>
             </div>
 
             {todayClasses.length === 0 ? (
-              <p className="text-gray-500 text-sm">No classes scheduled today.</p>
+              <p className="text-muted-foreground dark:text-gray-500 text-sm">No classes scheduled today.</p>
             ) : (
               <div className="space-y-3">
                 {todayClasses.map((cls, i) => (
@@ -442,17 +442,17 @@ setRecentActivity(mapped);
                     className={`flex items-start gap-3 p-3 rounded-xl border ${
                       upcomingClass === cls
                         ? "border-accent/50 bg-accent/10"
-                        : "border-white/5 bg-white/5"
+                        : "border-border dark:border-white/5 bg-muted/50 dark:bg-white/5"
                     }`}
                   >
                     <div className="flex-shrink-0 mt-0.5">
                       <Clock className="w-4 h-4 text-accent" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-white text-sm font-semibold truncate">{cls.subject}</p>
-                      <p className="text-gray-400 text-xs">{cls.time}</p>
+                      <p className="text-foreground dark:text-white text-sm font-semibold truncate">{cls.subject}</p>
+                      <p className="text-muted-foreground dark:text-gray-400 text-xs">{cls.time}</p>
                       {cls.room && (
-                        <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
+                        <p className="text-muted-foreground dark:text-gray-500 text-xs flex items-center gap-1 mt-0.5">
                           <MapPin className="w-3 h-3" />
                           {cls.room}
                         </p>
@@ -471,10 +471,10 @@ setRecentActivity(mapped);
 
           {/* Attendance performance stats */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl">
+            <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-6 shadow-xl">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-accent" />
-                <h2 className="text-lg font-bold text-white">Attendance Performance</h2>
+                <h2 className="text-lg font-bold text-foreground dark:text-white">Attendance Performance</h2>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -490,11 +490,11 @@ setRecentActivity(mapped);
         </div>
 
         {/* ── Attendance heatmap / calendar toggle ── */}
-        <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl">
+        <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Target className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-bold text-white">Attendance History</h2>
+              <h2 className="text-lg font-bold text-foreground dark:text-white">Attendance History</h2>
             </div>
             <div className="flex gap-2">
               <button
@@ -502,7 +502,7 @@ setRecentActivity(mapped);
                 className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
                   viewMode === "heatmap"
                     ? "bg-accent/20 border-accent/50 text-accent"
-                    : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
+                    : "bg-muted/50 dark:bg-white/5 border-white/10 text-muted-foreground dark:text-gray-400 hover:text-foreground dark:text-white"
                 }`}
               >
                 Heatmap
@@ -512,7 +512,7 @@ setRecentActivity(mapped);
                 className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
                   viewMode === "calendar"
                     ? "bg-accent/20 border-accent/50 text-accent"
-                    : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
+                    : "bg-muted/50 dark:bg-white/5 border-white/10 text-muted-foreground dark:text-gray-400 hover:text-foreground dark:text-white"
                 }`}
               >
                 Calendar
@@ -524,29 +524,29 @@ setRecentActivity(mapped);
         </div>
 
         {/* ── Attendance Analytics ── */}
-        <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl">
+        <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-6 shadow-xl">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-accent" />
-            <h2 className="text-lg font-bold text-white">Analytics</h2>
+            <h2 className="text-lg font-bold text-foreground dark:text-white">Analytics</h2>
           </div>
           <AttendanceAnalytics />
         </div>
 
         {/* ── Achievements ── */}
-        <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl">
+        <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-6 shadow-xl">
           <div className="flex items-center gap-2 mb-4">
             <Award className="w-5 h-5 text-accent" />
-            <h2 className="text-lg font-bold text-white">Achievements</h2>
+            <h2 className="text-lg font-bold text-foreground dark:text-white">Achievements</h2>
           </div>
           <AchievementSection performance={attendancePerformance} />
         </div>
 
         {/* ── Raise a complaint ── */}
-        <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl">
+        <div className="bg-card/40 dark:bg-card/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-border dark:border-white/10 p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-accent" />
-              <h2 className="text-lg font-bold text-white">Support</h2>
+              <h2 className="text-lg font-bold text-foreground dark:text-white">Support</h2>
             </div>
             <button
               onClick={() => setShowComplaint((v) => !v)}
@@ -605,12 +605,12 @@ const QuickStat = ({
     <div className="flex items-center space-x-2">
       {icon}
 
-      <span className="text-gray-300 text-sm">
+      <span className="text-muted-foreground dark:text-gray-300 text-sm">
         {label}
       </span>
     </div>
 
-    <span className="text-white font-semibold">
+    <span className="text-foreground dark:text-white font-semibold">
       {value}
     </span>
   </div>
@@ -624,7 +624,7 @@ const SecurityItem = ({
     <div className="flex items-center space-x-2">
       <CheckCircle className="w-4 h-4 text-green-400" />
 
-      <span className="text-gray-300 text-sm">
+      <span className="text-muted-foreground dark:text-gray-300 text-sm">
         {label}
       </span>
     </div>
