@@ -3,8 +3,8 @@ import Skeleton from "@/components/ui/Skeleton";
 
 /**
  * DashboardLoading Component
- * Next.js loading convention segment for the dashboard pages.
- * Displays structural grid skeletons mimicking widgets, charts, and data panels.
+ * Next.js loading segment for the dashboard pages.
+ * Displays structural grid skeletons mimicking widgets, charts, and data panels to prevent CLS.
  */
 export default function DashboardLoading() {
   return (
