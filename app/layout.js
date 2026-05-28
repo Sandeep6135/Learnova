@@ -16,7 +16,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import BackToTop from "@/components/BackToTop";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import NextTopLoader from "nextjs-toploader";
-
+import CommandPaletteWrapper from "@/components/CommandPaletteWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -283,6 +283,7 @@ export default function RootLayout({ children }) {
                     }}
                   />
                   <OfflineIndicator />
+                  <CommandPaletteWrapper />
                 </Suspense>
               </NotificationProvider>
             </FirestoreProvider>
