@@ -20,7 +20,7 @@ export const POST = withErrorHandler(async (request) => {
 
   // Validate body using the library validator
   const validation = validateGroqBody(body);
-  const trimmedMessage = validation.trimmedMessage;
+  const { trimmedMessage, messages } = validation;
 
   const injectionCheck = detectInjection(trimmedMessage);
   if (injectionCheck.isInjection) {
@@ -31,7 +31,7 @@ export const POST = withErrorHandler(async (request) => {
   const sanitizedMessage = sanitizeMessage(trimmedMessage);
 
   try {
-    const content = await callGroq(sanitizedMessage);
+    const content = await callGroq(sanitizedMessage, messages || []);
     return jsonSuccess({ message: content });
   } catch (error) {
     console.error(`[nova-ai] Groq API error:`, error.message);
