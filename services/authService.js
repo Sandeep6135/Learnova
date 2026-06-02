@@ -19,6 +19,19 @@ import { ROLE_CONFIG } from "@/constants/userRoles";
 const FIREBASE_CONFIG_ERROR =
   "Firebase is not configured. Please add your Firebase environment variables to .env.local and restart the development server.";
 
+// ─── Mock Auth Mode (development only) ──────────────────────────
+const isMockAuthMode =
+  process.env.NODE_ENV === "development" &&
+  process.env.NEXT_PUBLIC_MOCK_AUTH === "true";
+
+const MOCK_USER = {
+  uid: "mock-user-001",
+  email: "mock@learnova.dev",
+  displayName: "Mock User",
+  emailVerified: true,
+  role: "student",
+};
+
 const syncCustomClaims = async ({ user, role, fullName }) => {
   try {
     const token = await user.getIdToken();
@@ -102,7 +115,7 @@ export const loginWithEmail = async (email, password, selectedRole) => {
     // Update last login
     await setDoc(doc(db, "users", user.uid), {
       lastLogin: new Date(),
-    });
+    }, { merge: true });
 
     return { success: true, userData: { role: userRole } };
   } catch (err) {
@@ -315,7 +328,7 @@ export const loginWithGoogle = async (selectedRole, isLogin, additionalData) => 
     // Update last login for existing users
     await setDoc(doc(db, "users", user.uid), {
       lastLogin: new Date(),
-    });
+    }, { merge: true });
 
     return { success: true, userData: { role: userRole || selectedRole } };
   } catch (err) {
