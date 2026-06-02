@@ -61,7 +61,7 @@ export default function Contact() {
         }, 1000);
       }
     }
-    
+
     // CRITICAL FIX: Cleanup function to destroy the interval on component unmount
     return () => {
       if (interval) clearInterval(interval);
@@ -104,72 +104,72 @@ export default function Contact() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const COOLDOWN_MS = 60 * 1000;
-  const lastSubmit = localStorage.getItem('learnova_contact_last_submit');
-  if (lastSubmit && Date.now() - parseInt(lastSubmit) < COOLDOWN_MS) {
-    setSubmitStatus({
-      type: 'error',
-      message: `Please wait ${cooldownTimer} seconds before sending another message.`,
-    });
-    return;
-  }
+    const COOLDOWN_MS = 60 * 1000;
+    const lastSubmit = localStorage.getItem('learnova_contact_last_submit');
+    if (lastSubmit && Date.now() - parseInt(lastSubmit) < COOLDOWN_MS) {
+      setSubmitStatus({
+        type: 'error',
+        message: `Please wait ${cooldownTimer} seconds before sending another message.`,
+      });
+      return;
+    }
 
-  if (!validateForm()) {
-    setSubmitStatus({
-      type: "error",
-      message: "Please fix the highlighted fields before submitting.",
-    });
-    return;
-  }
+    if (!validateForm()) {
+      setSubmitStatus({
+        type: "error",
+        message: "Please fix the highlighted fields before submitting.",
+      });
+      return;
+    }
 
-  setIsSubmitting(true);
-  setSubmitStatus(null);
+    setIsSubmitting(true);
+    setSubmitStatus(null);
 
-  try {
-    await emailjs.send(
-      process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
-      process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
-      { ...formData },
-      process.env.NEXT_PUBLIC_EMAILJS_USER_ID
-    );
+    try {
+      await emailjs.send(
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+        { ...formData },
+        process.env.NEXT_PUBLIC_EMAILJS_USER_ID
+      );
 
-    setSubmitStatus({
-      type: "success",
-      message: "Thank you! Your message has been sent successfully.",
-    });
+      setSubmitStatus({
+        type: "success",
+        message: "Thank you! Your message has been sent successfully.",
+      });
 
-    setFormData({
-      name: "",
-      email: "",
-      company: "",
-      message: "",
-    });
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        message: "",
+      });
 
-    localStorage.setItem('learnova_contact_last_submit', Date.now().toString());
-    setCooldown(true);
-    let seconds = 60;
-    setCooldownTimer(seconds);
-    const interval = setInterval(() => {
-      seconds -= 1;
+      localStorage.setItem('learnova_contact_last_submit', Date.now().toString());
+      setCooldown(true);
+      let seconds = 60;
       setCooldownTimer(seconds);
-      if (seconds === 0) {
-        clearInterval(interval);
-        setCooldown(false);
-      }
-    }, 1000);
+      const interval = setInterval(() => {
+        seconds -= 1;
+        setCooldownTimer(seconds);
+        if (seconds === 0) {
+          clearInterval(interval);
+          setCooldown(false);
+        }
+      }, 1000);
 
-    setErrors({});
-  } catch (error) {
-    setSubmitStatus({
-      type: "error",
-      message: "Sorry, something went wrong. Please try again later.",
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      setErrors({});
+    } catch (error) {
+      setSubmitStatus({
+        type: "error",
+        message: "Sorry, something went wrong. Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const contactInfo = [
     {

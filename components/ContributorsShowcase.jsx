@@ -162,33 +162,33 @@ const ContributorsShowcase = () => {
         <div className="mt-8 flex flex-wrap justify-center sm:justify-start gap-4">
           {isLoading
             ? Array.from({ length: 23 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="w-16 h-16 rounded-full bg-slate-900/70 border border-border animate-pulse"
-                />
-              ))
+              <div
+                key={index}
+                className="w-16 h-16 rounded-full bg-slate-900/70 border border-border animate-pulse"
+              />
+            ))
             : visibleContributors.map((contributor) => (
-                <Tooltip
-                  key={contributor.login}
-                  text={contributor.login}
-                  position="top"
+              <Tooltip
+                key={contributor.login}
+                text={contributor.login}
+                position="top"
+              >
+                <a
+                  href={contributor.html_url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label={`View ${contributor.login} on GitHub`}
+                  className="group inline-flex rounded-full overflow-hidden border border-white/10 shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-accent/60"
                 >
-                  <a
-                    href={contributor.html_url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    aria-label={`View ${contributor.login} on GitHub`}
-                    className="group inline-flex rounded-full overflow-hidden border border-white/10 shadow-lg transition-transform duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-accent/60"
-                  >
-                    <img
-                      src={contributor.avatar_url}
-                      alt={`Avatar of ${contributor.login}`}
-                      className="w-16 h-16 object-cover"
-                      loading="lazy"
-                    />
-                  </a>
-                </Tooltip>
-              ))}
+                  <img
+                    src={contributor.avatar_url}
+                    alt={`Avatar of ${contributor.login}`}
+                    className="w-16 h-16 object-cover"
+                    loading="lazy"
+                  />
+                </a>
+              </Tooltip>
+            ))}
 
           {!isLoading && remainingCount > 0 && (
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-white/10 bg-slate-900/70 text-sm font-semibold text-white shadow-lg">

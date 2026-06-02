@@ -44,7 +44,7 @@ async function verifyIdToken(token) {
       algorithms: ["RS256"],
       clockTolerance: 300,
     });
-    
+
     // Validate standard JWT claims as required by the Firebase ID token spec
     const now = Math.floor(Date.now() / 1000);
     if (!payload.sub || payload.iat > now + 300) {
@@ -62,9 +62,9 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   // We only want to generate CSP for HTML pages, not static assets or APIs.
-  const isPage = !pathname.startsWith("/_next") && 
-                 !pathname.startsWith("/api") && 
-                 !pathname.match(/\.(?:png|jpg|jpeg|gif|svg|ico|css|js|woff2?|json)$/);
+  const isPage = !pathname.startsWith("/_next") &&
+    !pathname.startsWith("/api") &&
+    !pathname.match(/\.(?:png|jpg|jpeg|gif|svg|ico|css|js|woff2?|json)$/);
 
   const requestHeaders = new Headers(request.headers);
 
@@ -77,7 +77,7 @@ export async function middleware(request) {
   if (!authToken) {
     authToken = request.cookies.get("authToken")?.value;
   }
-  
+
   // Cryptographically verify the token — decoding alone is not sufficient
   let isTokenValid = false;
   let isEmailVerified = false;
@@ -88,7 +88,7 @@ export async function middleware(request) {
     if (payload) {
       isTokenValid = true;
       isEmailVerified = !!payload.email_verified;
-      
+
       // Prioritize securely signed custom claim
       if (payload.role) {
         userRole = payload.role;

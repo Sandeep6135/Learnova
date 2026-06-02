@@ -37,7 +37,7 @@ const Tooltip = ({
         aria-hidden="true"
       >
         {text}
-        
+
         {/* Tooltip Arrow */}
         <div className={`absolute border-4 border-transparent ${arrowClasses[position]}`} />
       </div>
