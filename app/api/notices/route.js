@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireRole } from "@/lib/rbac";
 import { withErrorHandler, parseJSON } from "@/lib/error-handler";
@@ -100,6 +101,16 @@ async function publishNotice(request) {
     });
   } catch (mongoError) {
     console.error("Failed to sync notice to MongoDB:", mongoError);
+  }
+
+  // Publish to Redis for real-time SSE delivery
+  try {
+    await publishNoticeToRedis({
+      ...newNotice,
+      _id: result.id,
+    });
+  } catch (redisError) {
+    console.error("Failed to publish notice to Redis:", redisError);
   }
 
   return NextResponse.json({
