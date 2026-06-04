@@ -4,7 +4,7 @@ import { connectDb } from "@/lib/mongodb";
 import { requireRole } from "@/lib/rbac";
 import { withErrorHandler } from "@/lib/error-handler";
 import { jsonSuccess } from "@/lib/api-response";
-import { AppError } from "@/lib/errors";
+import { AppError, ForbiddenError } from "@/lib/errors";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { escapeRegex, sanitizeSortField } from "@/utils/mongoUtils";
 
@@ -64,14 +64,32 @@ export const GET = withErrorHandler(async (request) => {
       status: "pending",
     };
 
+    // Tenant isolation
+    const userInstituteId = profile?.instituteId || (profile?.role === "institute" ? profile?.uid : null);
+    if (userInstituteId) {
+      query.instituteId = userInstituteId;
+    } else if (profile?.role !== "admin") {
+      throw new ForbiddenError("Forbidden: User profile missing institute affiliation.");
+    }
+
     // Role-based filtering
     if (profile.role === "student") {
       query.studentEmail = decodedToken.email;
+    } else if (profile.role === "teacher") {
+      const teacherSubjects = profile.subjects || [];
+      query.$and = [
+        {
+          $or: [
+            { className: { $in: teacherSubjects } },
+            { class: { $in: teacherSubjects } }
+          ]
+        }
+      ];
     }
 
     // Search filter
     if (search) {
-      query.$or = [
+      const searchOr = [
         {
           reason: {
             $regex: search,
@@ -85,6 +103,11 @@ export const GET = withErrorHandler(async (request) => {
           },
         },
       ];
+      if (query.$and) {
+        query.$and.push({ $or: searchOr });
+      } else {
+        query.$or = searchOr;
+      }
     }
 
     // Total count

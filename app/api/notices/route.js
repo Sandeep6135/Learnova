@@ -4,8 +4,10 @@ import { requireRole } from "@/lib/rbac";
 import { withErrorHandler, parseJSON } from "@/lib/error-handler";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { AppError } from "@/lib/errors";
-import { z } from "zod";
 import { connectDb } from "@/lib/mongodb";
+import { publishNoticeToRedis } from "@/app/api/notices/stream/route";
+import { createNoticeSchema } from "@/lib/validations/notices";
+import { validateRequest } from "@/lib/validations/validateRequest";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -64,8 +66,11 @@ async function publishNotice(request) {
     throw new AppError("Too many attempts. Please try again later.", 429);
   }
 
-  const body = await parseJSON(request, 1024 * 50);
-  const validData = noticeSchema.parse(body);
+  const validationResult = await validateRequest(request, createNoticeSchema, 1024 * 50);
+  if (!validationResult.success) {
+    return validationResult.response;
+  }
+  const validData = validationResult.data;
 
   const adminDb = getAdminDb();
   const instituteId = profile.instituteId || null;
