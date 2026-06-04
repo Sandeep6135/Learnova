@@ -91,6 +91,7 @@ export async function POST(req) {
       }
     }
 
+
     // Build firebaseUid map: email → uid
     const emailToUid = new Map();
     const allAuthUsers = await admin.auth().getUsers(authIdentifiers);
@@ -113,6 +114,11 @@ export async function POST(req) {
         s._firebaseUid = uid;
       }
     }
+
+    // Set Firebase custom claims for all created auth users
+    await Promise.all(createdAuthUids.map(uid =>
+      admin.auth().setCustomUserClaims(uid, { role: 'student', instituteId })
+    ));
 
     // Batch phase 4: Bulk Firestore writes
     const BATCH_LIMIT = 500;
@@ -182,7 +188,20 @@ export async function POST(req) {
     }
 
     if (mongoBulkOps.length > 0) {
-      await mongoUsers.bulkWrite(mongoBulkOps, { ordered: false });
+      try {
+        await mongoUsers.bulkWrite(mongoBulkOps, { ordered: false });
+      } catch (mongoError) {
+        // Rollback: delete Firebase Auth users created in this request
+        if (createdAuthUids.length > 0) {
+          try {
+            await admin.auth().deleteUsers(createdAuthUids);
+            console.warn(`Rolled back ${createdAuthUids.length} Firebase Auth users after MongoDB write failure`);
+          } catch (rollbackError) {
+            console.error(`Failed to rollback Firebase Auth users:`, rollbackError);
+          }
+        }
+        throw mongoError;
+      }
     }
 
     successfulImports = validStudents.length - failedImports.filter((f) =>

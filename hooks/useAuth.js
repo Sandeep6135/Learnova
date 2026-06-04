@@ -126,9 +126,10 @@ export const useAuth = () => {
   const firstSnapshotReceivedRef = useRef(false);
 
   const handleSessionExpired = useCallback(() => {
+    if (!isMounted()) return;
     setSessionExpired(true);
     setError("Your session has expired. Please sign in again.");
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
     if (!auth) {
@@ -151,7 +152,9 @@ export const useAuth = () => {
 
       try {
         if (firebaseUser) {
-          setUser(firebaseUser);
+          if (isMounted()) {
+            setUser(firebaseUser);
+          }
 
           // KEY FIX: set profileLoading=true BEFORE subscribing to Firestore
           // so ProtectedRoute sees loading=true during the async window and
@@ -208,7 +211,7 @@ export const useAuth = () => {
           await clearAuthSensitiveCaches();
         }
 
-        setError(null);
+        if (isMounted()) setError(null);
       } catch (err) {
         setError(err.message);
         setUser(null);
@@ -248,7 +251,7 @@ export const useAuth = () => {
       deleteCookie("userRole");
       await clearAuthSensitiveCaches();
     } catch (err) {
-      setError(err.message);
+      if (isMounted()) setError(err.message);
     }
   };
 
