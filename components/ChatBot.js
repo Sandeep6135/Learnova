@@ -516,6 +516,34 @@ export default function LearnovaChatbot() {
   const [isScrolling, setIsScrolling] = useState(false);
   const requestInFlightRef = useRef(false);
 
+  const messagesContainerRef = useRef(null);
+  const textareaRef = useRef(null);
+  const userHasScrolledUp = useRef(false);
+
+  // ── FIX FOR ISSUE #2009: Accessibility Hooks (Escape Key & Auto-Focus) ──
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // Listen for the Escape key and ensure the modal is open before closing it
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleGlobalKeyDown);
+      // Auto-focus the textarea seamlessly when the bot opens
+      if (textareaRef.current && !isMinimized) {
+        // slight timeout ensures the element is fully mounted by framer-motion/React before focusing
+        setTimeout(() => textareaRef.current.focus(), 100); 
+      }
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, [isOpen, isMinimized]);
+  // ────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     let scrollTimeout;
     const handleScroll = () => {
@@ -530,10 +558,6 @@ export default function LearnovaChatbot() {
       clearTimeout(scrollTimeout);
     };
   }, []);
-
-  const messagesContainerRef = useRef(null);
-  const textareaRef = useRef(null);
-  const userHasScrolledUp = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -755,6 +779,11 @@ export default function LearnovaChatbot() {
       setIsLoading(false);
       requestInFlightRef.current = false;
 
+      await saveConversation(text, botText);
+      
+      // Auto-focus back on input after sending a message for better flow
+      if (textareaRef.current) {
+        setTimeout(() => textareaRef.current.focus(), 10);
       if (idToken) {
         await saveConversation(text, botText, idToken);
       }
