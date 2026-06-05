@@ -18,7 +18,7 @@ const PUBLIC_API_PATHS = [
   "/api/auth/reset-password",
   "/api/health",
 ];
-
+const PUBLIC_PATHS = ["/activity", "/auth", "/verify"];
 // ─── CSP ──────────────────────────────────────────────────────────────────────
 
 function buildPageCsp() {
@@ -241,6 +241,9 @@ async function verifyIdToken(token) {
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+  if (PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+    return NextResponse.next();
+  }
   const isUnsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(request.method);
 
   // NOTE: CSRF validation applies only for cookie-authenticated requests.
