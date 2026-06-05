@@ -715,6 +715,7 @@ export default function LearnovaChatbot() {
         if (!user) {
           botText = "[**Please sign in**](/auth) to use the AI chatbot.";
         } else {
+          idToken = await user.getIdToken();
           // 🛠️ STEP 2 INTERCEPT: Check text signature against local action handlers first!
           const actionResponse = await parseUserIntent(text, {
             instituteId: userProfile?.instituteId,
@@ -726,7 +727,6 @@ export default function LearnovaChatbot() {
             botText = `🤖 **Action Handler Initiated Successfully**\n\n\`\`\`json\n${JSON.stringify(parsedResult, null, 2)}\n\`\`\``;
           } else {
             // No local action regex matched. Fall through safely to normal processing pipeline
-            const idToken = await user.getIdToken();
             botText = await generateBotResponse(
               text,
               currentCategory,
