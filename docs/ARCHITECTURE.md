@@ -99,3 +99,9 @@ learnova/
 ├── services/                 # Remote API integration layers (Auth & DB requests)
 └── utils/                    # Shared helper methods
 ```
+
+
+## 📡 API Routing Specifications
+
+- `/api/parent/dashboard`: Retrieves children list linked to the parent.
+- `/api/parent/student/[childId]/attendance`: Returns attendance data for the child.
